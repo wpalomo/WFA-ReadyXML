@@ -1,0 +1,13 @@
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\WFA-ReadyXML.exe.config
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\WFA-ReadyXML.exe.manifest
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\WFA-ReadyXML.application
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\WFA-ReadyXML.exe
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\WFA-ReadyXML.pdb
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\ICSharpCode.SharpZipLib.dll
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFAReadyXML.FormPrincipal.resources
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFAReadyXML.Properties.Resources.resources
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.csproj.GenerateResource.Cache
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.exe.manifest
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.application
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.exe
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.pdb
