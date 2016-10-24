@@ -59,7 +59,7 @@
             this.btnIniciar.BackColor = System.Drawing.Color.Honeydew;
             this.btnIniciar.Location = new System.Drawing.Point(177, 254);
             this.btnIniciar.Name = "btnIniciar";
-            this.btnIniciar.Size = new System.Drawing.Size(188, 57);
+            this.btnIniciar.Size = new System.Drawing.Size(188, 58);
             this.btnIniciar.TabIndex = 1;
             this.btnIniciar.Text = "Procesar";
             this.btnIniciar.UseVisualStyleBackColor = false;
@@ -128,7 +128,7 @@
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.FileName = "Seleccionar Archivo";
             // 
             // openFileDialog2
             // 

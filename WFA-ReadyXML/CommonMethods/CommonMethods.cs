@@ -17,26 +17,17 @@ namespace WFAReadyXML
         private const string KEY_CREDITNOTE = "c";
         private const string KEY_DEBITNOTE = "d";
 
-        public static string createXMLName(FileInfo file, int typeDoc)
+        public static string createSaveXMLName(string path, int typeDoc)
         {
             string nit = "";
             string nInvoice = "";
             string keyDoc = "";
 
+            FileInfo file = new FileInfo(path);
+
             XmlDocument doc = new XmlDocument();
             doc.Load(file.FullName);
-
-            Dictionary<string, string> namespaces =
-                new Dictionary<string, string> { {"fe", "http://www.dian.gov.co/contratos/facturaelectronica/v1"},
-                                                 {"ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"},
-                                                 {"cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"},
-                                                 {"cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"}};
-
-            XmlNamespaceManager xmlnsMgr = new XmlNamespaceManager(doc.NameTable);
-            foreach (var item in namespaces)
-            {
-                xmlnsMgr.AddNamespace(item.Key, item.Value);
-            }
+            XmlNamespaceManager xmlnsMgr = getNamespacesManager(doc);
 
             switch (typeDoc) 
             {
@@ -64,12 +55,17 @@ namespace WFAReadyXML
 
         private static string transformNAME(string nit, string nInvoice, string keyDoc)
         {
-            return PREFIX + keyDoc + nit + nInvoice;
+            string saveDirectory = ConfigurationManager.AppSettings[Constants.SAVE_DOCUMENTS_DIRECTORY];
+            return saveDirectory + "\\" + PREFIX + keyDoc + nit + nInvoice + ".xml";
         }
 
         private static string transformNINVOICE(string p)
         {
-            string nInvoiceTemp = int.Parse(p).ToString("X");
+            string prefix = ConfigurationManager.AppSettings[Constants.PREFIX];
+            int length = p.Length - prefix.Length;
+            string substring = p.Substring(prefix.Length, length);
+
+            string nInvoiceTemp = int.Parse(substring).ToString("X");
             string nInvoice = "";
             for (int i = nInvoiceTemp.Length; i < 10; i++)
             {
@@ -93,18 +89,22 @@ namespace WFAReadyXML
         public static string newXML(string pathXML, int typeDoc)
         {
             string pathXMLSave = "";
-            string saveDirectory = ConfigurationManager.AppSettings[Constants.SAVE_DOCUMENTS_DIRECTORY];
-
-            FileInfo fileXML = new FileInfo(pathXML);
             XmlDocument xDoc = new XmlDocument();
 
-            pathXMLSave = saveDirectory + "\\" + CommonMethods.createXMLName(fileXML, typeDoc) + ".xml";
+            pathXMLSave = CommonMethods.createSaveXMLName(pathXML, typeDoc);
             xDoc.Load(pathXML);
-            if (!(File.Exists(pathXMLSave)))
-                xDoc.Save(pathXMLSave);
+
+            if (ConfigurationManager.AppSettings[Constants.OVERWRITE_DOCUMENTS_DIRECTORY] == Constants.FLAG_OK)              
+                CommonMethods.saveXML(xDoc, pathXMLSave);
+            else
+            {
+                if (!(File.Exists(pathXMLSave)))
+                    CommonMethods.saveXML(xDoc, pathXMLSave);
+            }
             
             return pathXMLSave;
         }
+
 
         public static XmlNamespaceManager getNamespacesManager(XmlDocument doc) 
         {
@@ -113,7 +113,8 @@ namespace WFAReadyXML
                                                  {"ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"},
                                                  {"cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"},
                                                  {"cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"},
-                                                 {"ds", "http://www.w3.org/2000/09/xmldsig#"}};
+                                                 {"ds", "http://www.w3.org/2000/09/xmldsig#"},
+                                                 {"sts", "http://www.dian.gov.co/contratos/facturaelectronica/v1/Structures"}};
 
             XmlNamespaceManager xmlnsMgr = new XmlNamespaceManager(doc.NameTable);
             foreach (var item in namespaces)
@@ -121,6 +122,19 @@ namespace WFAReadyXML
                 xmlnsMgr.AddNamespace(item.Key, item.Value);
             }
             return xmlnsMgr;
+        }
+
+        public static void saveXML(XmlDocument xmlDocument, string fullName) 
+        {
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Encoding = new UTF8Encoding(false);
+            settings.Indent = true;
+            xmlDocument.CreateXmlDeclaration("1.0", "utf-8", "no");
+
+            using (XmlWriter writer = XmlWriter.Create(fullName, settings))
+            {
+                xmlDocument.Save(writer);
+            }
         }
     }
 }

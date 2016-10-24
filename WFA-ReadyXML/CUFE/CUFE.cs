@@ -13,17 +13,19 @@ namespace WFAReadyXML
     class CUFE
     {
 
-        private static void addUUID(string pathXML)
+        private static void addUUID(string pathXML, int typeDoc)
         {
             XmlDocument doc = new XmlDocument();
             doc.Load(pathXML);
             XmlNamespaceManager xmlnsMgr = CommonMethods.getNamespacesManager(doc);
 
-            XmlNode root = doc.SelectSingleNode("/fe:Invoice", xmlnsMgr);
+            string type = getTypeDoc(typeDoc);
 
-            if (doc.SelectNodes("/fe:Invoice/cbc:UUID", xmlnsMgr).Count < 1)
+            XmlNode root = doc.SelectSingleNode("/fe:" + type, xmlnsMgr);
+
+            if (doc.SelectNodes("/fe:" + type + "/cbc:UUID", xmlnsMgr).Count < 1)
             {
-                XmlNode childRef = doc.SelectSingleNode("/fe:Invoice/cbc:ID", xmlnsMgr);
+                XmlNode childRef = doc.SelectSingleNode("/fe:" + type + "/cbc:ID", xmlnsMgr);
 
                 //Create a new node.
                 XmlElement elem = doc.CreateElement("cbc", "UUID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
@@ -32,50 +34,71 @@ namespace WFAReadyXML
                 //Add the node to the document.
                 root.InsertAfter(elem, childRef);
 
-                doc.Save(pathXML);
+                CommonMethods.saveXML(doc, pathXML);
             }
 
         }
 
-        public static void AddingCUFEXML(FileInfo file, int typeDoc) 
+        private static string getTypeDoc(int typeDoc)
         {
-            addUUID(file.FullName);
-
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.Load(file.FullName);
-
-
-            var nsm = CommonMethods.getNamespacesManager(xmlDocument);
-
-            string NumAdq = getNumAdq(xmlDocument, nsm, typeDoc);
-            string NumFac = getNumFac(xmlDocument, nsm, typeDoc);
-            string FecFac = getFecFac(xmlDocument, nsm, typeDoc);
-            string ValFac = getValFac(xmlDocument, nsm, typeDoc);
-            string CodImp1 = getCodImp1(xmlDocument, nsm, typeDoc);
-            string ValImp1 = getValImp1(xmlDocument, nsm, typeDoc);
-            string CodImp2 = getCodImp2(xmlDocument, nsm, typeDoc);
-            string ValImp2 = getValImp2(xmlDocument, nsm, typeDoc);
-            string CodImp3 = getCodImp3(xmlDocument, nsm, typeDoc);
-            string ValImp3 = getValImp3(xmlDocument, nsm, typeDoc);
-            string ValImp = getValImp(xmlDocument, nsm, typeDoc);
-            string NitOFE = getNitOFE(xmlDocument, nsm, typeDoc);
-            string TipAdq = getTypeAdq(xmlDocument, nsm, typeDoc);
-            string ClTec = getClTec(xmlDocument, nsm, typeDoc);
-
-            string CUFE = CalculateCUFE(NumFac, FecFac, ValFac, CodImp1, ValImp1,
-                                        CodImp2, ValImp2, CodImp3, ValImp3, ValImp,
-                                        NitOFE, TipAdq, NumAdq, ClTec);
-
-            setCUFEXML(xmlDocument, nsm, CUFE, typeDoc);
-
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Encoding = new UTF8Encoding(false);
-            settings.Indent = true;
-
-            using (XmlWriter writer = XmlWriter.Create(file.FullName, settings))
+            string type;
+            switch (typeDoc)
             {
-                xmlDocument.Save(writer);
+                case Constants.INVOICE_STRING_FIRMA_ID:
+                    type = "Invoice";
+                    break;
+                case Constants.CREDITNOTE_STRING_FIRMA_ID:
+                    type = "CreditNote";
+                    break;
+                case Constants.DEBITNOTE_STRING_FIRMA_ID:
+                    type = "DebitNote";
+                    break;
+                default:
+                    type = "Invoice";
+                    break;
             }
+
+            return type;
+        }
+
+        public static int AddingCUFEXML(FileInfo file, int typeDoc) 
+        {
+            try
+            {
+                addUUID(file.FullName, typeDoc);
+
+                XmlDocument xmlDocument = new XmlDocument();
+                xmlDocument.Load(file.FullName);
+                var xmlnsMgr = CommonMethods.getNamespacesManager(xmlDocument);
+                XmlNode nodeR = xmlDocument.SelectSingleNode("/fe:" + getTypeDoc(typeDoc), xmlnsMgr);
+
+
+                string NumAdq = getNumAdq(nodeR, xmlnsMgr);
+                string NumFac = getNumFac(nodeR, xmlnsMgr);
+                string FecFac = getFecFac(nodeR, xmlnsMgr);
+                string ValFac = getValFac(nodeR, xmlnsMgr);
+                string CodImp1 = getCodImp1(nodeR, xmlnsMgr);
+                string ValImp1 = getValImp1(nodeR, xmlnsMgr);
+                string CodImp2 = getCodImp2(nodeR, xmlnsMgr);
+                string ValImp2 = getValImp2(nodeR, xmlnsMgr);
+                string CodImp3 = getCodImp3(nodeR, xmlnsMgr);
+                string ValImp3 = getValImp3(nodeR, xmlnsMgr);
+                string ValImp = getValImp(nodeR, xmlnsMgr);
+                string NitOFE = getNitOFE(nodeR, xmlnsMgr);
+                string TipAdq = getTypeAdq(nodeR, xmlnsMgr);
+                string ClTec = getClTec(nodeR, xmlnsMgr);
+
+                string CUFE = CalculateCUFE(NumFac, FecFac, ValFac, CodImp1, ValImp1,
+                                            CodImp2, ValImp2, CodImp3, ValImp3, ValImp,
+                                            NitOFE, TipAdq, NumAdq, ClTec);
+
+                setCUFEXML(nodeR, xmlnsMgr, CUFE);
+
+                CommonMethods.saveXML(xmlDocument, file.FullName);
+
+                return Constants.PROCESS_CORE_COD_OK_CUFE;
+            }
+            catch(Exception e){ return Constants.PROCESS_CORE_COD_ERROR_CUFE; }
 
         }
 
@@ -84,112 +107,112 @@ namespace WFAReadyXML
             public override Encoding Encoding { get { return Encoding.UTF8; } }
         }
 
-        private static void setCUFEXML(XmlDocument xmlDocument, XmlNamespaceManager nsm, string CUFE, int typeDoc)
+        private static void setCUFEXML(XmlNode nodeR, XmlNamespaceManager xmlnsMgr, string CUFE)
         {
-            xmlDocument.SelectSingleNode(Constants.XPATH_CUFE_INVOICE, nsm).InnerText = CUFE;
+            nodeR.SelectSingleNode(Constants.XPATH_CUFE, xmlnsMgr).InnerText = CUFE;
         }
 
-        private static string getNumFac(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getNumFac(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
-            return xmlDocument.SelectSingleNode(Constants.XPATH_NUMBER_INVOICE, nsm).InnerText;
+            return nodeR.SelectSingleNode(Constants.XPATH_NUMBER, xmlnsMgr).InnerText;
        }
 
-        private static string getClTec(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getClTec(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             return ConfigurationManager.AppSettings[Constants.KEY_TECHNICAL];
         }
 
-        private static string getNumAdq(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getNumAdq(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
-            return xmlDocument.SelectSingleNode(Constants.XPATH_ADQ_INVOICE, nsm).InnerText;
+            return nodeR.SelectSingleNode(Constants.XPATH_ADQ, xmlnsMgr).InnerText;
         }
 
-        private static string getTypeAdq(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getTypeAdq(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
-            return xmlDocument.SelectSingleNode(Constants.XPATH_TYPE_ADQ_INVOICE, nsm).InnerText;
+            return nodeR.SelectSingleNode(Constants.XPATH_TYPE_ADQ, xmlnsMgr).InnerText;
         }
 
-        private static string getNitOFE(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getNitOFE(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
-            return xmlDocument.SelectSingleNode(Constants.XPATH_NIT_INVOICE, nsm).InnerText;
+            return nodeR.SelectSingleNode(Constants.XPATH_NIT, xmlnsMgr).InnerText;
         }
 
-        private static string getValImp(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getValImp(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_PAYABLE_AMOUNT_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_PAYABLE_AMOUNT, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_DEFAULT; }
         }
 
-        private static string getValImp3(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getValImp3(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_THREE_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_THREE, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_DEFAULT; }
         }
 
-        private static string getCodImp3(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getCodImp3(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_THREE_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_THREE, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_COD_THREE_DEFAULT; }
         }
 
-        private static string getValImp2(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getValImp2(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_TWO_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_TWO, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_DEFAULT; }
         }
 
-        private static string getCodImp2(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getCodImp2(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_TWO_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_TWO, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_COD_TWO_DEFAULT; }
         }
 
-        private static string getValImp1(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getValImp1(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_ONE_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_AMOUNT_ONE, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_DEFAULT; }
         }
 
-        private static string getCodImp1(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getCodImp1(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_ONE_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_TAX_CATEGORY_ONE, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_COD_ONE_DEFAULT; }
         }
 
-        private static string getValFac(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getValFac(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
             try
             {
-                return xmlDocument.SelectSingleNode(Constants.XPATH_LINE_EXTENSION_AMOUNT_INVOICE, nsm).InnerText;
+                return nodeR.SelectSingleNode(Constants.XPATH_LINE_EXTENSION_AMOUNT, xmlnsMgr).InnerText;
             }
             catch { return Constants.VALUE_DEFAULT; }
         }
 
-        private static string getFecFac(XmlDocument xmlDocument, XmlNamespaceManager nsm, int typeDoc)
+        private static string getFecFac(XmlNode nodeR, XmlNamespaceManager xmlnsMgr)
         {
-            string date = xmlDocument.SelectSingleNode(Constants.XPATH_ISSUE_DATE_INVOICE, nsm).InnerText;
-            string time = xmlDocument.SelectSingleNode(Constants.XPATH_ISSUE_TIME_INVOICE, nsm).InnerText;
+            string date = nodeR.SelectSingleNode(Constants.XPATH_ISSUE_DATE, xmlnsMgr).InnerText;
+            string time = nodeR.SelectSingleNode(Constants.XPATH_ISSUE_TIME, xmlnsMgr).InnerText;
             string datetime = date + time;
             string ret = "";
             foreach (char c in datetime)

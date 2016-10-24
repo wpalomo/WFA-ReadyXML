@@ -2,6 +2,7 @@
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using System.Configuration;
 
 namespace WFAReadyXML
 {
@@ -9,23 +10,28 @@ namespace WFAReadyXML
     {
         // Compresses the files in the nominated folder, and creates a zip file on disk named as outPathname.
         //
-        public static void CreateZIP(string outPathname, string inPathname, string folderName)
+        public static int CreateZIP(string outPathname, string inPathname, string folderName)
         {
+            try
+            {
+                FileStream fsOut = File.Create(outPathname);
+                ZipOutputStream zipStream = new ZipOutputStream(fsOut);
 
-            FileStream fsOut = File.Create(outPathname);
-            ZipOutputStream zipStream = new ZipOutputStream(fsOut);
+                zipStream.SetLevel(3); //0-9, 9 being the highest level of compression
 
-            zipStream.SetLevel(3); //0-9, 9 being the highest level of compression
+                // This setting will strip the leading part of the folder path in the entries, to
+                // make the entries relative to the starting folder.
+                // To include the full path for each entry up to the drive root, assign folderOffset = 0.
+                int folderOffset = folderName.Length + (folderName.EndsWith("\\") ? 0 : 1);
 
-            // This setting will strip the leading part of the folder path in the entries, to
-            // make the entries relative to the starting folder.
-            // To include the full path for each entry up to the drive root, assign folderOffset = 0.
-            int folderOffset = folderName.Length + (folderName.EndsWith("\\") ? 0 : 1);
+                CompressFolder(folderName, zipStream, folderOffset, inPathname);
 
-            CompressFolder(folderName, zipStream, folderOffset, inPathname);
+                zipStream.IsStreamOwner = true; // Makes the Close also Close the underlying stream
+                zipStream.Close();
 
-            zipStream.IsStreamOwner = true; // Makes the Close also Close the underlying stream
-            zipStream.Close();
+                return Constants.PROCESS_CORE_COD_OK_ZIP;
+            }
+            catch (Exception e) { return Constants.PROCESS_CORE_COD_ERROR_ZIP; } 
         }
 
         // Recurses down the folder structure
@@ -69,6 +75,13 @@ namespace WFAReadyXML
                 throw new Exception("Error en el nombre del xml seleccionado");
 
             return file.DirectoryName + "\\ws_" + str[1] + ".zip";
+        }
+
+        public static void unZip(string pathFile) 
+        {
+            string directory = ConfigurationManager.AppSettings[Constants.SAVE_EXTRACT_DOCUMENTS_DIRECTORY];
+            FastZip fZip = new FastZip();
+            fZip.ExtractZip(pathFile, directory, null);
         }
     }
 }

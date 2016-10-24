@@ -37,7 +37,7 @@ namespace WFAReadyXML
 
         private void button2_Click(object sender, EventArgs e)
         {
-            openFileDialog1.Filter = "XML|*.xml";
+            openFileDialog1.Filter = Constants.FILTER_FILE_PROCESS;
             if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 txtPathXML.Text = openFileDialog1.FileName;
@@ -46,35 +46,30 @@ namespace WFAReadyXML
 
         private void btnIniciar_Click(object sender, EventArgs e)
         {
+            int codProc = 0;
             if (!(txtPathXML.Text.Length <= 0))
             {
+                FileInfo f = new FileInfo(txtPathXML.Text);
+                if (f.Extension != ".xml")
+                {
+                    printMsg(Constants.PROCESS_TYPE_EXT_ERROR);
+                }
+                else
+                {
+                    codProc = Core.IniciarProcesoZip(
+                        cbxFirma.Checked,
+                        cbxCUFE.Checked,
+                        cbxZIP.Checked,
+                        txtPathXML.Text,
+                        (int)cbTipoDoc.SelectedValue,
+                        "0");
 
-                string message = Core.iniciarProcesoZip(
-                    cbxFirma.Checked,
-                    cbxCUFE.Checked,
-                    cbxZIP.Checked,
-                    txtPathXML.Text,
-                    (int)cbTipoDoc.SelectedValue);
-
-                MessageBox.Show(message,
-                    "Aviso",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.RightAlign
-                    );
-
-                this.statusStrip1.Text = "asd";
+                    printMsg(codProc);
+                }
             }
             else
             {
-                MessageBox.Show("Chequee parametros ingresados",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.RightAlign
-                    );
+                printMsg(Constants.PROCESS_CORE_COD_ERROR_PARAM);
             }
 
         }
@@ -89,54 +84,114 @@ namespace WFAReadyXML
         {
             if (!(txtPathXML.Text.Length <= 0))
             {
-                string message = Core.iniciarProcesoZip(
-                    cbxFirma.Checked,
-                    cbxCUFE.Checked,
-                    cbxZIP.Checked,
-                    txtPathXML.Text,
-                    (int)cbTipoDoc.SelectedValue);
+                FileInfo f = new FileInfo(txtPathXML.Text);
+                if (f.Extension != ".xml")
+                {
+                    int codProc = Core.ProcesoEnvioZIP(
+                        cbxFirma.Checked,
+                        cbxCUFE.Checked,
+                        cbxZIP.Checked,
+                        txtPathXML.Text,
+                        (int)cbTipoDoc.SelectedValue);
 
-                MessageBox.Show(message,
-                    "Aviso",
+                    printMsg(codProc);
+                }
+                else
+                {
+                    int codProc = Core.IniciarProcesoZip(
+                        cbxFirma.Checked,
+                        cbxCUFE.Checked,
+                        cbxZIP.Checked,
+                        txtPathXML.Text,
+                        (int)cbTipoDoc.SelectedValue,
+                        "0");
+
+                    printMsg(codProc);
+
+                    if (cbxZIP.Checked)
+                    {
+                        string messageZIP = Core.EnviarZIP(txtPathXML.Text, (int)cbTipoDoc.SelectedValue);
+                        printMsg(messageZIP, Constants.PROCESS_CORE_COD_OK);
+                    }
+                    else
+                    {
+                        printMsg(Constants.PROCESS_ERROR_NOT_ZIP_MSG, Constants.PROCESS_CORE_COD_ERROR);
+                    }
+                }
+            }
+            else
+            {
+                printMsg(Constants.PROCESS_CORE_COD_ERROR_PARAM);
+            }
+        }
+
+        private void printMsg(string msg, int codProc) 
+        {
+            if (codProc == Constants.PROCESS_CORE_COD_OK)
+                MessageBox.Show(msg,
+                    Constants.MSG_FORM_OK,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information,
                     MessageBoxDefaultButton.Button1,
                     MessageBoxOptions.RightAlign
                     );
 
-                if (cbxZIP.Checked)
-                {
-                    string messageZIP = Core.enviarZIP(txtPathXML.Text, (int)cbTipoDoc.SelectedValue);
-                    MessageBox.Show(messageZIP,
-                        "Aviso",
+            if (codProc == Constants.PROCESS_CORE_COD_ERROR)
+                MessageBox.Show(msg,
+                            Constants.MSG_FORM_ERROR,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error,
+                            MessageBoxDefaultButton.Button1,
+                            MessageBoxOptions.RightAlign
+                            );
+
+        }
+        private void printMsg(int codProc)
+        {
+            if (codProc == Constants.PROCESS_CORE_COD_OK)
+            {
+                MessageBox.Show(Constants.PROCESS_CORE_OK,
+                        Constants.MSG_FORM_OK,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information,
                         MessageBoxDefaultButton.Button1,
                         MessageBoxOptions.RightAlign
                         );
-                }
-                else
-                {
-                    MessageBox.Show("Se debe zipear archivo",
-                        "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error,
-                        MessageBoxDefaultButton.Button1,
-                        MessageBoxOptions.RightAlign
-                        );
-                }
             }
-            else
-            {
-                MessageBox.Show("Chequee parametros ingresados",
-                    "Error",
+            else {
+                string msg = "";
+                switch (codProc) 
+                {
+                    case Constants.PROCESS_CORE_COD_ERROR_CUFE:
+                        msg = Constants.PROCESS_CORE_ERROR_CUFE_MSG;
+                        break;
+                    case Constants.PROCESS_CORE_COD_ERROR_FIRMA:
+                        msg = Constants.PROCESS_CORE_ERROR_FIRMA_MSG;
+                        break;
+                    case Constants.PROCESS_CORE_COD_ERROR_ZIP:
+                        msg = Constants.PROCESS_CORE_ERROR_ZIP_MSG;
+                        break;
+                    case Constants.PROCESS_CORE_COD_ERROR_PARAM:
+                        msg = Constants.PROCESS_CORE_ERROR_PARAM_MSG;
+                        break;
+                    case Constants.PROCESS_SEND_COD_ERROR:
+                        msg = Constants.PROCESS_SEND_STRING_ERROR_MSG;
+                        break;
+                    case Constants.PROCESS_TYPE_EXT_ERROR:
+                        msg = Constants.PROCESS_TYPE_EXT_ERROR_MGS;
+                        break;
+                    default:
+                        msg = Constants.PROCESS_CORE_ERROR_MSG;
+                        break;
+                }
+                MessageBox.Show(msg,
+                    Constants.MSG_FORM_ERROR,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error,
                     MessageBoxDefaultButton.Button1,
                     MessageBoxOptions.RightAlign
                     );
             }
-
         }
 
         private void cbxZIP_CheckedChanged(object sender, EventArgs e)

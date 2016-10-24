@@ -11,3 +11,4 @@ C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\
 C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.application
 C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.exe
 C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\obj\x86\Release\WFA-ReadyXML.pdb
+C:\Users\Matias\Documents\Visual Studio 2010\Projects\WFA-ReadyXML\WFA-ReadyXML\bin\Release\Ionic.Zip.dll

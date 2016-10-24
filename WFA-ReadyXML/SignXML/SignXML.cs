@@ -11,15 +11,36 @@ namespace WFAReadyXML
 {
     public class SignXML
     {
-        private static void addUBLExtension(string pathXML)
+        private static void addUBLExtension(string pathXML, int typeDoc)
         {
             XmlDocument doc = new XmlDocument();
+            XmlNodeList xelc;
+            XmlNode root;
             doc.Load(pathXML);
 
             XmlNamespaceManager xmlnsMgr = CommonMethods.getNamespacesManager(doc);
-            XmlNode root = doc.SelectSingleNode(Constants.XPATH_UBL_EXTENSIONS, xmlnsMgr);
 
-            if (doc.SelectNodes(Constants.XPATH_SIGN, xmlnsMgr).Count < 2)
+            switch (typeDoc) 
+            {
+                case Constants.INVOICE_STRING_FIRMA_ID:
+                    root = doc.SelectSingleNode(Constants.XPATH_UBL_EXTENSIONS_INVOICE, xmlnsMgr);
+                    xelc = doc.SelectNodes(Constants.XPATH_EXTCONT_SIGN_INVOICE, xmlnsMgr);
+                    break;
+                case Constants.CREDITNOTE_STRING_FIRMA_ID:
+                    root = doc.SelectSingleNode(Constants.XPATH_UBL_EXTENSIONS_CREDITNOTE, xmlnsMgr);
+                    xelc = doc.SelectNodes(Constants.XPATH_EXTCONT_SIGN_CREDITNOTE, xmlnsMgr);
+                    break;
+                case Constants.DEBITNOTE_STRING_FIRMA_ID:
+                    root = doc.SelectSingleNode(Constants.XPATH_UBL_EXTENSIONS_DEBITNOTE, xmlnsMgr);
+                    xelc = doc.SelectNodes(Constants.XPATH_EXTCONT_SIGN_DEBITNOTE, xmlnsMgr);
+                    break;
+                default: //default is invoice
+                    root = doc.SelectSingleNode(Constants.XPATH_UBL_EXTENSIONS_INVOICE, xmlnsMgr);
+                    xelc = doc.SelectNodes(Constants.XPATH_EXTCONT_SIGN_INVOICE, xmlnsMgr);
+                    break;
+            }
+
+            if (xelc.Count < 2)
             {
                 //Create a new node.
                 XmlNode elem = doc.CreateElement("ext", "UBLExtension", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2");
@@ -29,14 +50,16 @@ namespace WFAReadyXML
                 elem.AppendChild(elem1);
                 root.AppendChild(elem);
 
-                doc.Save(pathXML);
+                CommonMethods.saveXML(doc, pathXML);
             }
 
         }
 
-        public static void signJAVA(string pathXML, string pathXMLSave) 
+        public static int signJAVA(string pathXML, string pathXMLSave, int typeDoc) 
         {
-            if (documentNotSign(pathXML))
+            int exitCode = 0;
+
+            if (documentNotSign(pathXML, typeDoc))
             {
                 string response = "";
                 string pathJavaExe = ConfigurationManager.AppSettings[Constants.PATH_JAVA_EXE];
@@ -44,12 +67,14 @@ namespace WFAReadyXML
                 string workingDirectory = ConfigurationManager.AppSettings[Constants.WORKING_DIRECTORY];
                 int timeOut = int.Parse(ConfigurationManager.AppSettings[Constants.TIMEOUT]);
 
-                int exitCode = ExecProcess.ExecuteProcess(pathJavaExe,
+                exitCode = ExecProcess.ExecuteProcess(pathJavaExe,
                                                 commandExecuteJava + GetParameters(pathXML, pathXMLSave),
                                                 workingDirectory,
                                                 timeOut,
                                                 out response);
+                return exitCode;
             }
+            return exitCode;
         }
 
         private static bool checkNotSign(string pathXML)
@@ -61,17 +86,17 @@ namespace WFAReadyXML
             XmlNamespaceManager xmlnsMgr = CommonMethods.getNamespacesManager(doc);
             if (doc.SelectNodes(Constants.XPATH_SIGN_INVOICE, xmlnsMgr).Count > 0)
                 check = false;
-            if (doc.SelectNodes(Constants.XPATH_SIGN_INVOICE, xmlnsMgr).Count > 0)
+            if (doc.SelectNodes(Constants.XPATH_SIGN_CREDITNOTE, xmlnsMgr).Count > 0)
                 check = false;
-            if (doc.SelectNodes(Constants.XPATH_SIGN_INVOICE, xmlnsMgr).Count > 0)
+            if (doc.SelectNodes(Constants.XPATH_SIGN_DEBITNOTE, xmlnsMgr).Count > 0)
                 check = false;
 
             return check;
         }
 
-        private static bool documentNotSign(string pathXML)
+        private static bool documentNotSign(string pathXML, int typeDoc)
         {
-            addUBLExtension(pathXML);
+            addUBLExtension(pathXML, typeDoc);
             return checkNotSign(pathXML);
         }
 
